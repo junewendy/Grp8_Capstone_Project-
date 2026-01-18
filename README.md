@@ -1,4 +1,4 @@
-# ☕ Model to Predict Coffee Disease Risk for Proactive Farm Management  
+# Model to Predict Coffee Disease Risk for Proactive Farm Management  
 ### Data Science Team (Group 8)
 
 **Project Date:** June 2026  
@@ -14,7 +14,7 @@
 
 ---
 
-## 📌 Project Overview
+## Project Overview
 
 This project develops an **AI-powered Predictive Early Warning System** for **Coffee Leaf Rust (CLR)** using weather data.  
 The system supports farmers with **data-driven, proactive spraying decisions**, reducing unnecessary chemical use while protecting crop yield and income.
