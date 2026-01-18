@@ -100,7 +100,7 @@ Histograms were used to assess:
 
 The plots below illustrate the distributions of the four climate variables used in the model.
 
-![Univariate Weather Analysis](disributions.jpeg)
+![Univariate Weather Analysis](histogram.png)
 
 *Figure: Distribution of temperature, humidity, rainfall, and wind speed in Nyeri (2010–2020).*
 
