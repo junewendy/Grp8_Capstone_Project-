@@ -35,6 +35,15 @@ Current disease management practices are largely **reactive**:
   - Environmental degradation  
 
 There is therefore a **critical need for a data-driven early warning system** that leverages environmental data to provide **timely, accurate, and actionable risk predictions**, enabling farmers to spray only when necessary.
+**Objectives**
+
+Develop a model for proactive prediction of coffee leaf rust disease risk
+
+Classify disease risk into Low, Medium, and High to guide appropriate farmer action
+
+Help farmers reduce unnecessary chemical input costs by supporting efficient fungicide use
+
+Minimize environmental impact while protecting crop yields and livelihoods
 
 ---
 
