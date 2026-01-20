@@ -272,6 +272,7 @@ y_encoded = y.map(risk_mapping)
 print("Class distribution (encoded):")
 print(y_encoded.value_counts())
 
+```
 ## 5.2 Train–Test Split with Stratification
 
 The dataset is split into training and testing sets using train_test_split, with stratify=y_encoded to preserve the class distribution across Low, Medium, and High in both splits.
@@ -294,6 +295,7 @@ print(y_train.value_counts(normalize=True))
 print("Test target distribution:")
 print(y_test.value_counts(normalize=True))
 
+```
 ## 5.3 Handling Class Imbalance with Class Weights
 
 Because some risk categories are less frequent, the notebook computes balanced class weights and uses them in models that support class_weight, especially Logistic Regression and Random Forest.
@@ -315,6 +317,7 @@ print("Computed class weights:", class_weight_dict)
 with open("class_weights.pkl", "wb") as f:
     pickle.dump(class_weight_dict, f)
 
+```
 ## 5.4 Preprocessing and Pipeline Setup
 
 The notebook uses a ColumnTransformer to apply different transformations to numeric and categorical features before feeding them to the models.
@@ -338,6 +341,7 @@ preprocessor = ColumnTransformer(
     ]
 )
 
+```
 ## 5.5 Model Definitions
 
 Multiple models are defined in a models dictionary so they can be trained and evaluated in a uniform loop.
@@ -374,6 +378,7 @@ models = {
     )
 }
 
+```
 ## 5.6 Building the Training Pipeline
 
 Each model is wrapped inside a full training pipeline that includes the shared preprocessor. This ensures that all models receive identically transformed data during training and prediction.
@@ -390,6 +395,7 @@ for name, model in models.items():
         ("classifier", model)
     ])
 
+```
 ## 5.7 Model Training and Cross-Validation
 
 To assess generalization performance before looking at the test set, each pipeline is evaluated using 5‑fold StratifiedKFold cross‑validation on the training data.
@@ -413,6 +419,7 @@ for name, pipeline in pipelines.items():
     cv_results[name] = scores
     print(f"{name}: CV F1‑weighted = {scores.mean():.3f} (±{scores.std():.3f})")
 
+```
 ## 5.8 Final Model Training on Full Training Set
 
 After cross‑validation, each pipeline is refitted on the entire training set to produce the final models ready for evaluation on the held‑out test set.
@@ -424,6 +431,7 @@ for name, pipeline in pipelines.items():
     fitted_models[name] = pipeline
     print(f"Trained {name}")
 
+```
 # 6. Model Evaluation
 
 ## 6.1 Performance Metrics
@@ -471,6 +479,7 @@ def evaluate_model(model, X_test, y_test, model_name):
     
     return y_pred
 
+```
 ## 6.2 Model Comparison Results
 
 The three models are evaluated on the held‑out test set, producing the following performance summary:
@@ -490,6 +499,8 @@ for name, model in fitted_models.items():
         "predictions": y_pred,
         "accuracy": accuracy_score(y_test, y_pred)
     }
+```
+
 
 ## 6.3 Feature Importance Analysis (Random Forest & XGBoost)
 
