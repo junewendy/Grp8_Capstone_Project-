@@ -272,7 +272,7 @@ y_encoded = y.map(risk_mapping)
 print("Class distribution (encoded):")
 print(y_encoded.value_counts())
 
-**## 5.2 Train–Test Split with Stratification**
+## 5.2 Train–Test Split with Stratification
 
 The dataset is split into training and testing sets using train_test_split, with stratify=y_encoded to preserve the class distribution across Low, Medium, and High in both splits.
 
