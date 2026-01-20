@@ -1,7 +1,7 @@
 # Model to Predict Coffee Disease Risk for Proactive Farm Management  
 ### Data Science Team (Group 8)
 
-**Project Date:** June 2026  
+**Project Date:** January 2026  
 
 ## Team Members
 - June Masolo  
@@ -16,8 +16,7 @@
 
 ## Project Overview
 
-This project develops an **AI-powered Predictive Early Warning System** for **Coffee Leaf Rust (CLR)** using weather data.  
-The system supports farmers with **data-driven, proactive spraying decisions**, reducing unnecessary chemical use while protecting crop yield and income.
+This project entails building a supervised machine learning model to predict the risk level of coffee leaf rust disease outbreaks. The model classifies upcoming risk as Low, Medium, or High using environmental and historical data, enabling farmers to apply fungicides or pesticides proactively and only when necessary. The approach focuses on key drivers such as weather patterns, historical pest incidence, and crop growth stages to forecast disease probability in coffee crops. The model is trained using meteorological data, including temperature, humidity, and rainfall, obtained from the NASA POWER API (https://power.larc.nasa.gov/), which is tailored for agricultural modeling. Several predictive classification models are employed, including Logistic Regression as the baseline model, Decision Tree and Random Forest models, and Gradient Boosting (XGBoost), to assign disease risk levels. Model performance is evaluated using precision, recall, F1-score, and overall multi-class accuracy, with strong emphasis on the interpretability and practical usefulness of the risk categories for real-world decision-making.
 
 ![Project Banner](projectbanner.png)
 
