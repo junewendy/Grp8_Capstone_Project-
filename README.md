@@ -1,4 +1,5 @@
 # Model to Predict Coffee Disease Risk for Proactive Farm Management  
+![Project Banner](projectbanner.png)
 ### DSPT-12(Group 8)
 
 **Project Date:** January 2026  
