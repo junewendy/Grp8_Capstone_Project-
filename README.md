@@ -485,10 +485,10 @@ def evaluate_model(model, X_test, y_test, model_name):
 The three models are evaluated on the held‑out test set, producing the following performance summary:
 
 
-Model	| Accuracy	| Weighted F1	| High‑Risk Recall	| High‑Risk Precision|
-Baseline (LogReg) |	0.713	| 0.704	| 0.67	| 0.65 |
-Random Forest	| 0.742	| 0.731	| 0.73	| 0.71|
-XGBoost	| 0.759	| 0.748	| 0.76	|
+Model	            | Accuracy	    | Weighted F1	    | High‑Risk Recall	  |   High‑Risk Precision  |
+Baseline (LogReg) |	0.713	        | 0.704	          | 0.67	              | 0.65                   |
+Random Forest	    | 0.742	        | 0.731	          | 0.73	              | 0.71                   |
+XGBoost	          | 0.759	        | 0.748	          | 0.76	              |
 
 ```python
 # Evaluate all models
@@ -503,4 +503,150 @@ for name, model in fitted_models.items():
 
 
 ## 6.3 Feature Importance Analysis (Random Forest & XGBoost)
+
+Understanding which features drive the model’s predictions is crucial for interpretability and trust. 
+This project includes feature importance analysis for both tree‑based models,Random Forest and XGBoost,to validate whether the model’s decisions align with agronomic knowledge.
+
+## Feature Importance from Random Forest
+
+Random Forest provides feature importance based on the mean decrease in impurity (Gini importance). 
+The following code extracts and visualizes the top 10 most important features:
+
+```python
+# Extract feature importances from Random Forest
+rf_model = fitted_models["Random Forest"].named_steps["classifier"]
+feature_names = numeric_features + categorical_features
+importances = rf_model.feature_importances_
+
+# Create DataFrame for visualization
+importance_df = pd.DataFrame({
+    "Feature": feature_names,
+    "Importance": importances
+}).sort_values(by="Importance", ascending=False).head(10)
+
+# Plot
+plt.figure(figsize=(10, 6))
+sns.barplot(data=importance_df, x="Importance", y="Feature", palette="viridis")
+plt.title("Top 10 Feature Importances - Random Forest", fontsize=16)
+plt.xlabel("Importance (Gini)", fontsize=12)
+plt.ylabel("Feature", fontsize=12)
+plt.tight_layout()
+plt.show()
+
+```
+
+## Feature Importance from XGBoost
+
+XGBoost provides several importance types (weight, gain, cover). 
+Here we use gain, which indicates the average improvement in accuracy brought by a feature when it is used in trees.
+
+```python
+# Extract feature importances from XGBoost
+xgb_model = fitted_models["XGBoost"].named_steps["classifier"]
+xgb_importances = xgb_model.feature_importances_
+
+# Create DataFrame
+xgb_importance_df = pd.DataFrame({
+    "Feature": feature_names,
+    "Importance": xgb_importances
+}).sort_values(by="Importance", ascending=False).head(10)
+
+# Plot
+plt.figure(figsize=(10, 6))
+sns.barplot(data=xgb_importance_df, x="Importance", y="Feature", palette="magma")
+plt.title("Top 10 Feature Importances - XGBoost (Gain)", fontsize=16)
+plt.xlabel("Importance (Gain)", fontsize=12)
+plt.ylabel("Feature", fontsize=12)
+plt.tight_layout()
+plt.show()
+
+```
+
+Key Findings from Feature Importance
+Rank	  Random Forest (Top Features)  	XGBoost (Top Features)
+1	        Humidity (%)	                 Humidity (%)
+2	        Temp (Avg)	                   Temp (Avg)
+3	        Rainfall (mm)	                 Rainfall (mm)
+4	        CropStage	                     CropStage
+5	        WindSpeed (m/s)	               WindSpeed (m/s)
+
+
+## Agronomic Validation:
+
+Humidity and Temperature consistently rank as the top two predictors, which aligns with the known biology of Coffee Leaf Rust (CLR). Fungal spores require high humidity to germinate and moderate temperatures (15–30°C) to thrive.
+
+Rainfall is also important because it facilitates spore dispersal and creates the moist leaf surfaces needed for infection.
+
+CropStage appears as a meaningful feature, confirming that the plant’s phenological stage influences disease susceptibility.
+
+WindSpeed contributes but with lower importance, which matches field observations that wind is a secondary dispersal factor.
+
+These results provide confidence that the model is learning biologically plausible patterns rather than spurious correlations.
+
+# 7. Model Deployment
+
+## 7.1 API-Based Prediction Service
+
+A lightweight Flask/FastAPI service can be deployed to serve predictions in real time. The service would:
+
+Accept weather forecasts (temperature, humidity, rainfall, wind) and crop stage
+
+Return a risk class (Low/Medium/High) and a confidence score
+
+Provide a simple, interpretable recommendation (e.g., “No spray needed,” “Monitor closely,” “Apply fungicide”)
+
+```python
+# Example deployment code snippet (simplified)
+import pickle
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+# Load trained model and preprocessing objects
+with open("model.pkl", "rb") as f:
+    model = pickle.load(f)
+
+class WeatherInput(BaseModel):
+    temp: float
+    humidity: float
+    rainfall: float
+    wind_speed: float
+    crop_stage: str
+
+@app.post("/predict")
+def predict_risk(data: WeatherInput):
+    # Prepare input
+    input_df = pd.DataFrame([data.dict()])
+    # Predict
+    risk_class = model.predict(input_df)[0]
+    confidence = model.predict_proba(input_df).max()
+    
+    risk_map = {0: "Low", 1: "Medium", 2: "High"}
+    return {
+        "risk_level": risk_map[risk_class],
+        "confidence": round(confidence, 3),
+        "recommendation": generate_recommendation(risk_class)
+    }
+```
+
+## 7.2 Integration with Farmer-Facing Applications
+
+The model can be integrated into:
+
+Mobile SMS alerts (via APIs like Africa’s Talking)
+
+Farm management dashboards (e.g., FarmLogic, Twiga)
+
+Government agricultural extension portals
+
+## 7.3 Continuous Learning Pipeline
+
+To maintain accuracy over time, the system should include:
+
+Regular retraining with new weather and outbreak data
+
+Performance monitoring to detect concept drift
+
+Feedback loops where farmers can report false positives/negatives
 
