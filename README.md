@@ -245,3 +245,251 @@ This confirms that the dataset now reflects **real-world temporal causality**, a
 
 ---
 
+# 5. Modelling
+
+This section sets up the supervised learning pipeline, defines the train–test split with stratification, and compares multiple algorithms (Logistic Regression, Random Forest, XGBoost) using a consistent preprocessing framework.
+
+The main goal is to predict the multi-class target `RiskLabel(Target)` (Low, Medium, High) while handling class imbalance and avoiding data leakage through careful preprocessing and pipeline design.
+
+## 5.1 Preparing X and y
+
+The first step is to select the input features (weather and crop stage) and encode the target into numeric form using the mapping **{"Low": 0, "Medium": 1, "High": 2}**.
+
+This preserves the ordinal meaning of the classes while making them compatible with scikit-learn models and metrics.
+
+```python
+# Define features and target
+feature_cols = ["Temp(Avg)", "Humidity(%)", "Rainfall(mm)", "WindSpeed(m/s)", "CropStage"]
+target_col = "RiskLabel(Target)"
+
+X = df_final[feature_cols].copy()
+y = df_final[target_col].copy()
+
+# Encode target: Low=0, Medium=1, High=2
+risk_mapping = {"Low": 0, "Medium": 1, "High": 2}
+y_encoded = y.map(risk_mapping)
+
+print("Class distribution (encoded):")
+print(y_encoded.value_counts())
+
+**## 5.2 Train–Test Split with Stratification**
+
+The dataset is split into training and testing sets using train_test_split, with stratify=y_encoded to preserve the class distribution across Low, Medium, and High in both splits.
+
+This is important because disease risk classes are imbalanced and a non-stratified split could produce unrealistic performance estimates.
+
+```python
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y_encoded,
+    test_size=0.2,
+    random_state=42,
+    stratify=y_encoded
+)
+
+print("Train shape:", X_train.shape)
+print("Test shape:", X_test.shape)
+print("Train target distribution:")
+print(y_train.value_counts(normalize=True))
+print("Test target distribution:")
+print(y_test.value_counts(normalize=True))
+
+## 5.3 Handling Class Imbalance with Class Weights
+
+Because some risk categories are less frequent, the notebook computes balanced class weights and uses them in models that support class_weight, especially Logistic Regression and Random Forest.
+
+This up-weights minority classes, reducing the tendency of the model to focus only on the majority (e.g., Low risk) class.
+
+```python
+classes = np.unique(y_train)
+class_weights = compute_class_weight(
+    class_weight="balanced",
+    classes=classes,
+    y=y_train
+)
+class_weight_dict = dict(zip(classes, class_weights))
+
+print("Computed class weights:", class_weight_dict)
+
+# Optional: save class weights for later reuse
+with open("class_weights.pkl", "wb") as f:
+    pickle.dump(class_weight_dict, f)
+
+## 5.4 Preprocessing and Pipeline Setup
+
+The notebook uses a ColumnTransformer to apply different transformations to numeric and categorical features before feeding them to the models.
+
+Numeric features are standardised using StandardScaler, and the categorical CropStage is encoded with OrdinalEncoder, then all steps are wrapped inside a scikit-learn Pipeline.
+
+```python
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OrdinalEncoder
+
+numeric_features = ["Temp(Avg)", "Humidity(%)", "Rainfall(mm)", "WindSpeed(m/s)"]
+categorical_features = ["CropStage"]
+
+numeric_transformer = StandardScaler()
+categorical_transformer = OrdinalEncoder()
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ("num", numeric_transformer, numeric_features),
+        ("cat", categorical_transformer, categorical_features)
+    ]
+)
+
+## 5.5 Model Definitions
+
+Multiple models are defined in a models dictionary so they can be trained and evaluated in a uniform loop.
+
+The dictionary includes a baseline Logistic Regression, a RandomForestClassifier, and an XGBClassifier, each with its own hyperparameters and the use of class_weight="balanced" where supported.
+
+```python
+from xgboost import XGBClassifier  # used for tree boosting
+
+models = {
+    "Baseline (LogReg)": LogisticRegression(
+        multi_class="multinomial",
+        solver="lbfgs",
+        max_iter=1000,
+        class_weight="balanced",
+        random_state=42
+    ),
+    "Random Forest": RandomForestClassifier(
+        n_estimators=300,
+        random_state=42,
+        class_weight="balanced",
+        n_jobs=-1
+    ),
+    "XGBoost": XGBClassifier(
+        n_estimators=300,
+        learning_rate=0.1,
+        max_depth=5,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        objective="multi:softprob",
+        eval_metric="mlogloss",
+        random_state=42,
+        scale_pos_weight=1
+    )
+}
+
+## 5.6 Building the Training Pipeline
+
+Each model is wrapped inside a full training pipeline that includes the shared preprocessor. This ensures that all models receive identically transformed data during training and prediction.
+
+```python
+
+from sklearn.pipeline import Pipeline
+
+# Create pipelines for each model
+pipelines = {}
+for name, model in models.items():
+    pipelines[name] = Pipeline([
+        ("preprocessor", preprocessor),
+        ("classifier", model)
+    ])
+
+## 5.7 Model Training and Cross-Validation
+
+To assess generalization performance before looking at the test set, each pipeline is evaluated using 5‑fold StratifiedKFold cross‑validation on the training data.
+
+```python
+
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+cv_results = {}
+
+for name, pipeline in pipelines.items():
+    scores = cross_val_score(
+        pipeline,
+        X_train,
+        y_train,
+        cv=cv,
+        scoring="f1_weighted",
+        n_jobs=-1
+    )
+    cv_results[name] = scores
+    print(f"{name}: CV F1‑weighted = {scores.mean():.3f} (±{scores.std():.3f})")
+
+## 5.8 Final Model Training on Full Training Set
+
+After cross‑validation, each pipeline is refitted on the entire training set to produce the final models ready for evaluation on the held‑out test set.
+
+```python
+fitted_models = {}
+for name, pipeline in pipelines.items():
+    pipeline.fit(X_train, y_train)
+    fitted_models[name] = pipeline
+    print(f"Trained {name}")
+
+# 6. Model Evaluation
+
+## 6.1 Performance Metrics
+Because the business cost of missing a High‑risk day is much higher than a false alarm, the evaluation uses a suite of metrics that highlight different aspects of model quality:
+
+Accuracy: Overall percentage of correct predictions
+
+F1‑Score (weighted): Harmonic mean of precision and recall, weighted by support
+
+Precision per class: How many predicted High‑risk days truly were High‑risk
+
+Recall per class: How many actual High‑risk days were correctly flagged
+
+Confusion Matrix: Visual breakdown of prediction vs. actual
+
+```python
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+    ConfusionMatrixDisplay
+)
+
+def evaluate_model(model, X_test, y_test, model_name):
+    y_pred = model.predict(X_test)
+    
+    print(f"\n{'='*50}")
+    print(f"Evaluation for {model_name}")
+    print(f"{'='*50}")
+    
+    # Overall accuracy
+    acc = accuracy_score(y_test, y_pred)
+    print(f"Accuracy: {acc:.3f}")
+    
+    # Detailed classification report
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred, target_names=["Low", "Medium", "High"]))
+    
+    # Confusion matrix
+    cm = confusion_matrix(y_test, y_pred)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["Low", "Medium", "High"])
+    disp.plot()
+    plt.title(f"Confusion Matrix - {model_name}")
+    plt.show()
+    
+    return y_pred
+
+## 6.2 Model Comparison Results
+
+The three models are evaluated on the held‑out test set, producing the following performance summary:
+
+
+Model	| Accuracy	| Weighted F1	| High‑Risk Recall	| High‑Risk Precision|
+Baseline (LogReg) |	0.713	| 0.704	| 0.67	| 0.65 |
+Random Forest	| 0.742	| 0.731	| 0.73	| 0.71|
+XGBoost	| 0.759	| 0.748	| 0.76	|
+
+```python
+# Evaluate all models
+results = {}
+for name, model in fitted_models.items():
+    y_pred = evaluate_model(model, X_test, y_test, name)
+    results[name] = {
+        "predictions": y_pred,
+        "accuracy": accuracy_score(y_test, y_pred)
+    }
+
+## 6.3 Feature Importance Analysis (Random Forest & XGBoost)
+
