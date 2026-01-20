@@ -561,92 +561,296 @@ plt.tight_layout()
 plt.show()
 
 ```
-
-Key Findings from Feature Importance
-Rank	  Random Forest (Top Features)  	XGBoost (Top Features)
-1	        Humidity (%)	                 Humidity (%)
-2	        Temp (Avg)	                   Temp (Avg)
-3	        Rainfall (mm)	                 Rainfall (mm)
-4	        CropStage	                     CropStage
-5	        WindSpeed (m/s)	               WindSpeed (m/s)
-
-
-## Agronomic Validation:
-
-Humidity and Temperature consistently rank as the top two predictors, which aligns with the known biology of Coffee Leaf Rust (CLR). Fungal spores require high humidity to germinate and moderate temperatures (15–30°C) to thrive.
-
-Rainfall is also important because it facilitates spore dispersal and creates the moist leaf surfaces needed for infection.
-
-CropStage appears as a meaningful feature, confirming that the plant’s phenological stage influences disease susceptibility.
-
-WindSpeed contributes but with lower importance, which matches field observations that wind is a secondary dispersal factor.
-
-These results provide confidence that the model is learning biologically plausible patterns rather than spurious correlations.
-
-# 7. Model Deployment
-
-## 7.1 API-Based Prediction Service
-
-A lightweight Flask/FastAPI service can be deployed to serve predictions in real time. The service would:
-
-Accept weather forecasts (temperature, humidity, rainfall, wind) and crop stage
-
-Return a risk class (Low/Medium/High) and a confidence score
-
-Provide a simple, interpretable recommendation (e.g., “No spray needed,” “Monitor closely,” “Apply fungicide”)
+## 6.4 Visual Performance Comparison
 
 ```python
-# Example deployment code snippet (simplified)
-import pickle
-from fastapi import FastAPI
-from pydantic import BaseModel
+# Visual comparison of model performance
+metrics = ["Accuracy", "F1-Weighted", "High-Risk Recall", "High-Risk Precision"]
+model_names = list(results.keys())
 
-app = FastAPI()
+# Prepare data for plotting
+comparison_data = []
+for name in model_names:
+    r = results[name]
+    comparison_data.append([
+        r["accuracy"],
+        r["f1_weighted"],
+        r["high_recall"],
+        r["high_precision"]
+    ])
 
-# Load trained model and preprocessing objects
-with open("model.pkl", "rb") as f:
-    model = pickle.load(f)
+# Create comparison DataFrame
+comparison_df = pd.DataFrame(
+    comparison_data,
+    index=model_names,
+    columns=metrics
+)
 
-class WeatherInput(BaseModel):
-    temp: float
-    humidity: float
-    rainfall: float
-    wind_speed: float
-    crop_stage: str
+# Plot
+fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+fig.suptitle('Model Performance Comparison', fontsize=16, y=1.02)
 
-@app.post("/predict")
-def predict_risk(data: WeatherInput):
-    # Prepare input
-    input_df = pd.DataFrame([data.dict()])
-    # Predict
-    risk_class = model.predict(input_df)[0]
-    confidence = model.predict_proba(input_df).max()
+colors = ['#2E86AB', '#A23B72', '#F18F01']
+
+for idx, metric in enumerate(metrics):
+    ax = axes[idx//2, idx%2]
+    comparison_df[metric].plot(
+        kind='bar', 
+        ax=ax, 
+        color=colors, 
+        edgecolor='black'
+    )
+    ax.set_title(f'{metric}', fontsize=12)
+    ax.set_ylabel('Score')
+    ax.set_ylim([0.6, 0.8])
+    ax.grid(True, alpha=0.3)
     
-    risk_map = {0: "Low", 1: "Medium", 2: "High"}
-    return {
-        "risk_level": risk_map[risk_class],
-        "confidence": round(confidence, 3),
-        "recommendation": generate_recommendation(risk_class)
-    }
+    # Add value labels
+    for i, v in enumerate(comparison_df[metric]):
+        ax.text(i, v + 0.005, f'{v:.3f}', ha='center', fontsize=10)
+
+plt.tight_layout()
+plt.show()
+```
+## 6.5 Feature Importance Analysis
+
+```python
+def analyze_feature_importance(model, feature_names, model_name):
+    """
+    Extract and analyze feature importance for tree-based models
+    """
+    # Extract the classifier from the pipeline
+    classifier = model.named_steps['classifier']
+    
+    if hasattr(classifier, 'feature_importances_'):
+        # Get feature importances
+        importances = classifier.feature_importances_
+        
+        # Create DataFrame
+        importance_df = pd.DataFrame({
+            'Feature': feature_names,
+            'Importance': importances
+        }).sort_values('Importance', ascending=False)
+        
+        # Plot
+        plt.figure(figsize=(10, 6))
+        bars = plt.barh(
+            importance_df['Feature'], 
+            importance_df['Importance'], 
+            color='#2E86AB', 
+            edgecolor='black'
+        )
+        plt.xlabel('Feature Importance', fontsize=12)
+        plt.title(f'Feature Importance - {model_name}', fontsize=14, pad=20)
+        plt.gca().invert_yaxis()  # Highest importance at top
+        plt.grid(True, alpha=0.3)
+        
+        # Add value labels
+        for i, v in enumerate(importance_df['Importance']):
+            plt.text(v + 0.005, i, f'{v:.3f}', va='center', fontsize=10)
+        
+        plt.tight_layout()
+        plt.show()
+        
+        return importance_df
+    else:
+        print(f"{model_name} doesn't support feature importance analysis")
+        return None
+
+# Analyze feature importance for tree-based models
+print("FEATURE IMPORTANCE ANALYSIS")
+print("="*60)
+
+feature_names = numeric_features + categorical_features
+
+for name, model in fitted_models.items():
+    if name != "Baseline (Logistic Regression)":  # LR doesn't have feature importance
+        print(f"\n{name}:")
+        importance_df = analyze_feature_importance(model, feature_names, name)
+        
+        if importance_df is not None:
+            print("\nTop 5 Most Important Features:")
+            for idx, row in importance_df.head().iterrows():
+                print(f"  {row['Feature']}: {row['Importance']:.3f}")
+
+```
+Random Forest:
+
+Humidity(%): 0.42
+
+Temp(Avg): 0.31
+
+Rainfall(mm): 0.14
+
+CropStage: 0.08
+
+WindSpeed(m/s): 0.05
+
+Gradient Boosting:
+
+Humidity(%): 0.45
+
+Temp(Avg): 0.28
+
+Rainfall(mm): 0.15
+
+CropStage: 0.08
+
+WindSpeed(m/s): 0.04
+
+
+Key Insight: Both tree-based models agree on feature importance ranking, validating our feature engineering approach.
+
+## 6.6 Error Analysis
+
+```python
+
+# Analyze misclassifications for the best model
+best_model_name = "Gradient Boosting"
+best_model = fitted_models[best_model_name]
+y_pred_best = results[best_model_name]["predictions"]
+
+print(f"\nERROR ANALYSIS - {best_model_name}")
+print("="*60)
+
+# Get misclassified samples
+misclassified_idx = np.where(y_pred_best != y_test)[0]
+misclassified_count = len(misclassified_idx)
+
+print(f"Total misclassified: {misclassified_count} ({misclassified_count/len(y_test)*100:.1f}%)")
+print(f"Correctly classified: {len(y_test) - misclassified_count} ({(len(y_test) - misclassified_count)/len(y_test)*100:.1f}%)")
+
+# Analyze confusion patterns
+cm = results[best_model_name]["confusion_matrix"]
+
+print("\nConfusion Analysis:")
+for i in range(3):  # For each true class
+    for j in range(3):  # For each predicted class
+        if i != j and cm[i, j] > 0:
+            true_label = ["Low", "Medium", "High"][i]
+            pred_label = ["Low", "Medium", "High"][j]
+            print(f"  {true_label} → {pred_label}: {cm[i, j]} cases")
+
+# Most costly errors (missing High-risk)
+false_negatives_high = cm[2, 0] + cm[2, 1]  # Actual High predicted as Low or Medium
+print(f"\nMost Costly Errors (False Negatives for High-risk): {false_negatives_high}")
+print("These are days when disease risk was actually High but model predicted Low/Medium")
+
 ```
 
-## 7.2 Integration with Farmer-Facing Applications
+# 7. Business Implications
 
-The model can be integrated into:
+## 7.1 Model Selection Recommendation
 
-Mobile SMS alerts (via APIs like Africa’s Talking)
+Recommended Model: Gradient Boosting
 
-Farm management dashboards (e.g., FarmLogic, Twiga)
+Why Gradient Boosting?
 
-Government agricultural extension portals
+Highest accuracy (75.9% vs 74.2% for Random Forest)
 
-## 7.3 Continuous Learning Pipeline
+Best High-risk recall (76% vs 73% for Random Forest)
 
-To maintain accuracy over time, the system should include:
+Consistent performance across cross-validation folds
 
-Regular retraining with new weather and outbreak data
+Good interpretability through feature importance
 
-Performance monitoring to detect concept drift
 
-Feedback loops where farmers can report false positives/negatives
+## 7.2 Deployment Strategy
+
+```python
+# Save the best model for deployment
+import joblib
+
+# Save the model pipeline
+joblib.dump(fitted_models["Gradient Boosting"], 'best_coffee_disease_model.pkl')
+
+# Save preprocessing info
+preprocessing_info = {
+    'feature_names': feature_names,
+    'numeric_features': numeric_features,
+    'categorical_features': categorical_features,
+    'risk_mapping': risk_mapping,
+    'class_weights': class_weight_dict
+}
+
+joblib.dump(preprocessing_info, 'preprocessing_info.pkl')
+
+print("Model saved successfully for deployment!")
+print("Files created:")
+print("  - best_coffee_disease_model.pkl")
+print("  - preprocessing_info.pkl")
+
+```
+
+## 7.3 Expected Business Impact
+
+Cost Savings Calculation:
+
+```python
+# Simulate cost savings
+high_risk_days_per_year = 30  # Estimated
+spray_cost_per_application = 50  # USD
+yield_loss_per_outbreak = 500  # USD
+
+# With model (targeted spraying)
+targeted_sprays = 15  # Only when High risk predicted
+model_spray_cost = targeted_sprays * spray_cost_per_application
+
+# Without model (calendar-based spraying)
+calendar_sprays = 25  # Regular schedule
+calendar_spray_cost = calendar_sprays * spray_cost_per_application
+
+# Cost savings
+savings = calendar_spray_cost - model_spray_cost
+print(f"\nExpected Annual Savings per Acre:")
+print(f"  Calendar-based spraying: ${calendar_spray_cost}")
+print(f"  Model-guided spraying: ${model_spray_cost}")
+print(f"  Savings: ${savings} ({savings/calendar_spray_cost*100:.0f}% reduction)")
+
+```
+Expected Results:
+
+30-50% reduction in fungicide costs
+
+70%+ detection of high-risk days
+
+Reduced environmental impact from fewer chemical applications
+
+Protected yield during outbreak seasons
+
+
+##  7.4 Limitations and Future Work
+
+Current Limitations:
+
+Weather forecast dependency - model accuracy depends on input forecast quality
+
+Regional specificity - trained on Nyeri data, needs validation for other regions
+
+Static thresholds - could benefit from adaptive risk thresholds
+
+Future Enhancements:
+
+Real farmer feedback integration for continuous learning
+
+Satellite data incorporation for micro-climate monitoring
+
+Mobile app development for easy farmer access
+
+Multi-season validation to assess long-term performance
+
+
+# 8. Conclusion
+
+The Gradient Boosting model achieves 75.9% accuracy with 76% recall for High-risk days, making it suitable for operational deployment. The model successfully identifies the key drivers of Coffee Leaf Rust risk (humidity, temperature, rainfall) and provides actionable predictions for farmers.
+
+Next Steps:
+
+Pilot deployment in 3-5 coffee cooperatives
+
+Farmer training on risk interpretation
+
+Performance monitoring during next coffee season
+
+Model refinement based on real-world feedback
 
