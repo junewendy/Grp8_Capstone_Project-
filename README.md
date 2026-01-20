@@ -44,6 +44,7 @@ There is therefore a **critical need for a data-driven early warning system** th
 2.Classify disease risk into Low, Medium, and High to guide appropriate farmer action
 
 3.Help farmers reduce unnecessary chemical input costs by supporting efficient fungicide use
+
 4.Minimize environmental impact while protecting crop yields and livelihoods
 
 ---
