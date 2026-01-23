@@ -71,7 +71,7 @@ The project environment was configured using standard Python data science librar
 
 ---
 
-## 3. Exploratory Data Analysis (EDA)
+## Exploratory Data Analysis (EDA)
 
 Exploratory analysis was conducted to understand the structure, quality, and behavior of the data before modeling.
 
@@ -114,107 +114,43 @@ The final dataset used for modeling consisted of:
 This confirms that the dataset is **clean, complete, and suitable for machine learning modeling**.
 
 ---
-## 4. Data Preparation & Feature Engineering
+## 3. Data Preparation & Feature Engineering
 
-A rigorous data preparation process was undertaken to transform the raw weather data into a format suitable for predictive modeling. This step is critical in ensuring that the model reflects **real agronomic behavior** rather than purely statistical patterns.
+Data preparation for this project involved transforming the raw weather data into a structured format suitable for predictive modeling. This included column renaming, mapping crop stages based on date, and creating a target variable for disease risk using agronomic rules. In Kenya, coffee exhibits clear seasonality: the Flowering stage typically occurs after the onset of rains, around March/April and October/November. Disease risk is not solely determined by weather; plants are more vulnerable during the Flowering and Early Cherry stages than during pruning.
 
-### 4.1 Domain-Driven Feature Design
+To generate the target variable, "Risk Level," agronomic rules were applied based on scientific research on Coffee Leaf Rust (CLR). The fungus *Hemileia vastatrix* thrives under specific conditions: temperatures between 15°C and 30°C (optimal 21°C–25°C), relative humidity exceeding 90% for at least 24–48 hours, and moderate rainfall sufficient to splash spores but not so heavy as to wash them away completely. Each day in the dataset was labeled as Low, Medium, or High risk based on these conditions, providing a reliable basis for supervised learning.
 
-Rather than relying solely on statistical transformations, this project incorporated **agronomic knowledge** to guide feature construction. The preparation process involved:
+Examining the proportions of the Risk Label reveals a moderate class imbalance:
 
-- Column renaming for clarity and interpretability  
-- Date-based mapping of coffee crop stages  
-- Rule-based construction of the **target variable (Risk Label)**  
-- Time-aware feature engineering using **lagged variables** and **rolling averages**  
+| RiskLabel(Target) | Proportion |
+|-----------------|------------|
+| Medium          | 0.761      |
+| High            | 0.134      |
+| Low             | 0.106      |
 
-This ensured that the model remained **scientifically grounded and contextually meaningful**.
+This output indicates that a naïve model predicting only "Medium" could achieve roughly 76% accuracy, but would fail to detect High Risk outbreaks, which are critical for farmers. Missing a High Risk day has significant business impact, making overall accuracy insufficient as a metric.
 
----
+Algorithms like Random Forest and XGBoost naturally aim to minimize total error, prioritizing the most frequent class—in this case, "Medium"—at the expense of High and Low classes. To mitigate this, strategies such as using F1-Score, Precision, and Recall for High and Low classes, applying class weighting (`class_weight='balanced'`), and employing resampling techniques like SMOTE (Synthetic Minority Over-sampling Technique) will be applied during modeling.
 
-## 4.2 Target Variable Construction (Risk Label)
+The class imbalance is visually represented in the bar chart below, showing the number of days labeled Low, Medium, and High from 2010 to 2020:
 
-To build a supervised machine learning model, a target variable was required. Since labeled disease outbreak data was unavailable, the dataset was labeled using **agronomic rules commonly used by plant pathologists**.
+![Class Distribution of Coffee Disease Risk](path/to/class_distribution.png)
 
-### Agronomic Basis for Risk Labeling
+As noted, there are approximately 3,000 "Medium" days and around 500 "High" days. This confirms the need for class weighting during modeling, ensuring that missing one High Risk day is treated as far more severe than missing one Medium Risk day.
 
-Research on **Coffee Leaf Rust (Hemileia vastatrix)** indicates that outbreaks are most likely when:
+After addressing the class distribution, lagged features were created to account for the disease incubation period and to enable early warning predictions. Research indicates that the lag between conducive weather (high humidity or rainfall) and measurable CLR outbreaks ranges from 15 to 30 days, with early warning systems often using 8 to 15 days. In this project, a 14-day lag was applied to the key weather variables: average temperature, humidity, rainfall, and wind speed. Additionally, 14-day rolling averages were calculated to capture sustained environmental conditions, such as prolonged high humidity, which have a stronger effect on disease risk than single-day events. This lagging ensures that the model can anticipate outbreaks before they are visible in the field.  
 
-- **Temperature:** between **15°C and 30°C**  
-  - Optimal range: **21°C – 25°C**  
-- **Relative Humidity:** sustained above **90%** for 24–48 hours  
-- **Rainfall:** present (to facilitate spore dispersal), but not excessively heavy  
+The final processed dataset includes the original weather variables, crop stage, month, the Risk Label target, lagged weather variables, and rolling averages. A sample of the processed data shows the relationship between lagged humidity values, rolling averages, and the target Risk Label:
 
-Additionally, disease susceptibility varies by **crop growth stage**. In Kenya, coffee plants are most vulnerable during:
-- **Flowering stage** (March–April and October–November)  
-- **Early cherry development stage**  
+| Date       | RiskLabel(Target) | Humidity(%)_Lag14 | Humidity(%)_Avg_Last14Days |
+|------------|-----------------|-----------------|----------------------------|
+| 2010-01-15 | Medium          | 86.57           | 78.30                     |
+| 2010-01-16 | Medium          | 89.25           | 77.43                     |
+| 2010-01-17 | Medium          | 85.61           | 76.35                     |
+| 2010-01-18 | Medium          | 85.22           | 75.62                     |
+| 2010-01-19 | Medium          | 78.20           | 74.39                     |
 
-Using these scientifically grounded conditions, a rule-based logic was applied to generate the target column:
-
-> **Risk Label (Target):** Low, Medium, or High risk of disease outbreak
-
-This approach ensures that the model predictions are **biologically meaningful and practically interpretable**.
-
----
-
-## 4.3 Temporal Feature Engineering (Lagging and Rolling Averages)
-
-A key limitation of naive models is that they treat weather and disease risk as occurring simultaneously. In reality, there is a **biological delay (incubation period)** between conducive weather conditions and visible disease symptoms.
-
-### Scientific Motivation
-
-For Coffee Leaf Rust in East Africa:
-- Reported incubation lag ranges between **15–30 days**  
-- Early warning systems often use a shorter operational lag of **8–15 days**  
-
-Based on this evidence, this project implemented a **14-day predictive lag window**, enabling the model to function as a true **forecasting system** rather than a reactive classifier.
-
----
-
-## 4.4 Creation of Lagged Features
-
-Four core weather variables were transformed into time-aware predictors:
-
-- Temperature  
-- Humidity  
-- Rainfall  
-- Wind Speed  
-
-Two types of temporal features were created:
-
-### a) 14-Day Lag Features
-These represent the weather conditions **14 days prior**, allowing the model to learn delayed disease responses.
-
-Example:
-- `Humidity (%)_Lag14` = humidity value recorded 14 days earlier  
-
-### b) 14-Day Rolling Averages
-Sustained environmental conditions are often more biologically relevant than isolated events. Therefore, rolling averages were computed to capture **cumulative exposure**.
-
-Example:
-- `Humidity (%)_Avg_Last14Days` = average humidity over the previous 14 days  
-
-This allows the model to distinguish between:
-- One unusually humid day  
-vs  
-- Two weeks of consistently high humidity (which is much more dangerous biologically)
-
----
-
-## 4.5 Final Dataset Structure After Feature Engineering
-
-After generating lagged features and rolling averages, the initial rows containing missing values (created by shifting) were removed.
-
-A sample of the final engineered dataset is shown below:
-
-| Date       | Risk Label (Target) | Humidity (%)_Lag14 | Humidity (%)_Avg_Last14Days |
-|------------|----------------------|---------------------|------------------------------|
-| 2010-01-15 | Medium               | 86.57              | 78.30                        |
-| 2010-01-16 | Medium               | 89.25              | 77.43                        |
-| 2010-01-17 | Medium               | 85.61              | 76.35                        |
-| 2010-01-18 | Medium               | 85.22              | 75.62                        |
-| 2010-01-19 | Medium               | 78.20              | 74.39                        |
-
-This confirms that the dataset now reflects **real-world temporal causality**, allowing the model to generate **practical early warnings** rather than merely explaining historical patterns.
+With the dataset now prepared—class imbalance understood and addressed, and lagged and rolling features engineered—the data is fully ready for predictive modeling of Coffee Leaf Rust outbreaks.
 
 ---
 
