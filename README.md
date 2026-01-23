@@ -193,7 +193,9 @@ The application is designed so that the user only needs to provide four main wea
 This design choice was intentional because requiring users to manually input many technical values such as 14-day averages would make the system difficult to use and reduce adoption. By keeping the input simple, the tool becomes more realistic for real-world agricultural use.
 
 The deployed application can be accessed here:
-https://coffee-risk-ai.streamlit.app/
+
+[![Open in Streamlit](https://img.shields.io/badge/Live%20Demo-Streamlit-brightgreen)](https://coffee-risk-ai.streamlit.app/)
+
 
 ### Conclusion
 The project successfully developed a Predictive Early Warning System for Coffee Leaf Rust using a Random Forest Classifier. The model achieved a 98% Recall for high-risk outbreaks, significantly outperforming the baseline Logistic Regression at 91%. The analysis identifies Rainfall as the leading indicator of risk, followed by Temperature and Humidity, suggesting that moisture availability is the critical catalyst for fungal development in the Nyeri region.
