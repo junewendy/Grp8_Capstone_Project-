@@ -105,6 +105,8 @@ Histograms were used to assess:
 
 The plots below illustrate the distributions of the four climate variables used in the model.
 
+### Univariate Weather Analysis
+
 ![Univariate Weather Analysis](histogram.png)
 
 *Figure: Distribution of temperature, humidity, rainfall, and wind speed in Nyeri (2010–2020).*
@@ -134,6 +136,10 @@ The plots below illustrate the distributions of the four climate variables used 
 - This supports later modeling findings that wind contributes minimally to disease prediction.
 
 ---
+
+### Correlation Between Weather Variables
+
+![Correlation Matrix of Weather Features](Correlation-Matrix.jpg)
 
 ## Dataset Summary
 
@@ -185,6 +191,11 @@ Using these scientifically grounded conditions, a rule-based logic was applied t
 > **Risk Label (Target):** Low, Medium, or High risk of disease outbreak
 
 This approach ensures that the model predictions are **biologically meaningful and practically interpretable**.
+
+
+### Visual Check of Rule-Based Labels
+
+![Visualizing the Risk Rules: Did we separate the classes correctly?](Visualized-Risk-Rules.jpg)
 
 ---
 
@@ -238,8 +249,8 @@ After generating lagged features and rolling averages, the initial rows containi
 
 A sample of the final engineered dataset is shown below:
 
-| Date       | Risk Label (Target) | Humidity (%)_Lag14 | Humidity (%)_Avg_Last14Days |
-|------------|----------------------|---------------------|------------------------------|
+| Date       | Risk Label (Target)  | Humidity (%)_Lag14 | Humidity (%)_Avg_Last14Days  |
+|------------|----------------------|--------------------|------------------------------|
 | 2010-01-15 | Medium               | 86.57              | 78.30                        |
 | 2010-01-16 | Medium               | 89.25              | 77.43                        |
 | 2010-01-17 | Medium               | 85.61              | 76.35                        |
@@ -255,6 +266,11 @@ This confirms that the dataset now reflects **real-world temporal causality**, a
 This section sets up the supervised learning pipeline, defines the train–test split with stratification, and compares multiple algorithms (Logistic Regression, Random Forest, XGBoost) using a consistent preprocessing framework.
 
 The main goal is to predict the multi-class target `RiskLabel(Target)` (Low, Medium, High) while handling class imbalance and avoiding data leakage through careful preprocessing and pipeline design.
+
+## Class Distribution
+
+![Class Distribution of Coffee Disease Risk (2010–2020)](Class-Distribution.jpg)
+
 
 ## 5.1 Preparing X and y
 
@@ -489,11 +505,12 @@ def evaluate_model(model, X_test, y_test, model_name):
 
 The three models are evaluated on the held‑out test set, producing the following performance summary:
 
+| Model             |  Accuracy     | Weighted F1        | High‑Risk Recall |  High‑Risk Precision |
+|-------------------|---------------|--------------------|------------------|-----------------------
+|Baseline (LogReg)  |  0.713        | 0.704              |  0.67            |  0.65                |
+| Random Forest     |  0.742        | 0.731	             |  0.73            |  0.71                |
+| XGBoost           |  0.759        | 0.748              |  0.76            |                 |
 
-Model	            | Accuracy	    | Weighted F1	    | High‑Risk Recall	  |   High‑Risk Precision  |
-Baseline (LogReg) |	0.713	        | 0.704	          | 0.67	              | 0.65                   |
-Random Forest	    | 0.742	        | 0.731	          | 0.73	              | 0.71                   |
-XGBoost	          | 0.759	        | 0.748	          | 0.76	              |
 
 ```python
 # Evaluate all models
@@ -568,6 +585,18 @@ plt.show()
 ```
 ## 6.4 Visual Performance Comparison
 
+This section visually compares how each candidate model performs across the most important evaluation metrics for this problem: overall accuracy, F1-weighted score, recall on high-risk days, and precision on high-risk days. 
+
+### Model Performance Comparison
+![Model Performance Comparison: High Risk Detection](Model-Performance-Comparison.jpg)
+
+
+By plotting the results side by side, it becomes easy to see which algorithm consistently performs better rather than relying only on raw numbers in a table. 
+
+The focus on high-risk recall ensures the selected model does not miss many truly dangerous disease days, while precision shows how often a high-risk alert is actually correct. 
+
+Together, these charts help justify the final model choice in a transparent way for both technical and non-technical stakeholders.
+
 ```python
 # Visual comparison of model performance
 metrics = ["Accuracy", "F1-Weighted", "High-Risk Recall", "High-Risk Precision"]
@@ -618,6 +647,14 @@ plt.tight_layout()
 plt.show()
 ```
 ## 6.5 Feature Importance Analysis
+
+This part drills into why the best-performing tree-based models make their predictions by examining feature importance scores. 
+
+For Random Forest and Gradient Boosting, the bar plots show that humidity and average temperature dominate the risk signal, followed by rainfall, crop stage, and wind speed. 
+
+This aligns well with agronomic knowledge of coffee leaf rust, where moist, warm conditions and rain-driven spore spread are known drivers of outbreaks. 
+
+Seeing both models agree on the same ranking builds confidence that the feature engineering is sound and that the model is learning meaningful, physically interpretable relationships rather than noise.
 
 ```python
 def analyze_feature_importance(model, feature_names, model_name):
@@ -679,7 +716,7 @@ for name, model in fitted_models.items():
                 print(f"  {row['Feature']}: {row['Importance']:.3f}")
 
 ```
-Random Forest:
+**Random Forest:**
 
 Humidity(%): 0.42
 
@@ -691,7 +728,8 @@ CropStage: 0.08
 
 WindSpeed(m/s): 0.05
 
-Gradient Boosting:
+
+**Gradient Boosting:**
 
 Humidity(%): 0.45
 
@@ -707,6 +745,14 @@ WindSpeed(m/s): 0.04
 Key Insight: Both tree-based models agree on feature importance ranking, validating our feature engineering approach.
 
 ## 6.6 Error Analysis
+
+In this section, the notebook looks beyond overall scores to understand where the model is still making mistakes. 
+
+By inspecting the confusion matrix for the Gradient Boosting model, it highlights how often each true risk class (Low, Medium, High) is misclassified into another category. 
+
+Special attention is given to false negatives on High-risk days, since missing an actual outbreak has a much higher business cost than issuing a few extra warnings. 
+
+This analysis informs future improvement work, such as adjusting class weights or decision thresholds to further reduce the most dangerous error types while keeping the model practical for farmers
 
 ```python
 
@@ -747,6 +793,14 @@ print("These are days when disease risk was actually High but model predicted Lo
 
 ## 7.1 Model Selection Recommendation
 
+Here, the notebook formally recommends Gradient Boosting as the preferred model for deployment based on a balance of accuracy and risk-sensitive metrics. 
+
+Compared to the Random Forest, Gradient Boosting delivers slightly higher overall accuracy and better recall on High-risk days, meaning it catches more of the dangerous disease periods. 
+
+At the same time, its performance remains stable across cross-validation folds, reducing the risk that results are driven by a lucky split. 
+
+Because it also provides clear feature importance scores, this model combines strong predictive power with interpretable drivers, which is crucial for building trust with agronomists and farmers
+
 Recommended Model: Gradient Boosting
 
 Why Gradient Boosting?
@@ -759,8 +813,23 @@ Consistent performance across cross-validation folds
 
 Good interpretability through feature importance
 
+### Seasonality of Disease risk
+
+![Seasonality: Frequency of Risk Levels by Month](Seasonality.jpg)
 
 ## 7.2 Deployment Strategy
+
+This section explains how the final model is packaged for real-world use and why the user interface only exposes four input variables. 
+
+In practice, a farmer or extension officer will only provide current values for temperature, humidity, rainfall, and wind speed, while the app reconstructs all lagged and rolling features internally through the saved preprocessing pipeline. 
+
+This design keeps the workflow simple and farmer-friendly, avoiding the unrealistic expectation that users can manually compute and enter 14-day averages or lagged values. 
+
+By saving both the trained Gradient Boosting pipeline and the associated preprocessing configuration with joblib, the system becomes plug-and-play for any web or mobile front end that needs to query disease risk.
+
+How the app will work : The user only has to worry about the 4 main weather variables. The app handles the complex "behind-the-scenes" math (the other 12 columns) automatically.
+
+Why only 4 parameters? If you asked a farmer to manually enter 16 different numbers—including "14-day rolling averages"—they would probably stop using the app. It's too much work! In the code provided, we take those 4 current values and "feed" them into the lag and average slots.
 
 ```python
 # Save the best model for deployment
@@ -787,7 +856,30 @@ print("  - preprocessing_info.pkl")
 
 ```
 
+### Live deployed model through Streamlit web application 
+
+You can try the model live through our Streamlit web application.
+
+The app lets you input the four key weather variables (temperature, humidity, rainfall, and wind speed) and instantly returns the predicted coffee disease risk level (Low, Medium, or High) together with an interpretation for farmers.
+
+🔗 **Live App:** https://coffee-risk-ai.streamlit.app/
+
+Alternalively, you can just click on this;
+
+[![Open in Streamlit](https://img.shields.io/badge/Live%20Demo-Streamlit-brightgreen)](https://coffee-risk-ai.streamlit.app/)
+
+Enjoy exploring.....
+
+
 ## 7.3 Expected Business Impact
+
+The final part translates model performance into concrete financial and environmental outcomes at the farm level. 
+
+Using simple assumptions about the number of high-risk days, spray costs, and potential yield losses, the notebook compares a traditional calendar-based spraying schedule against a model-guided, targeted spraying strategy. 
+
+The simulation suggests that only spraying when the model flags High risk can cut fungicide costs by roughly 30–50% while still catching the majority of dangerous outbreak days. 
+
+This not only improves profitability for smallholder farmers but also reduces unnecessary chemical use, supporting more sustainable coffee production in the long run.
 
 Cost Savings Calculation:
 
@@ -848,6 +940,13 @@ Multi-season validation to assess long-term performance
 # 8. Conclusion
 
 The Gradient Boosting model achieves 75.9% accuracy with 76% recall for High-risk days, making it suitable for operational deployment. The model successfully identifies the key drivers of Coffee Leaf Rust risk (humidity, temperature, rainfall) and provides actionable predictions for farmers.
+
+Observation: Wind Speed showed negligible feature importance.
+
+Interpretation: The disease is "moisture-driven" rather than "dispersal-limited."
+
+Action: Future versions of the model could potentially exclude wind data to simplify the sensor array without losing accuracy.
+
 
 Next Steps:
 
