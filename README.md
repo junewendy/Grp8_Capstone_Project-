@@ -93,8 +93,6 @@ Histograms were used to assess:Distribution shapes,Presence of outliers,Environm
 
 The plots below illustrate the distributions of the four climate variables used in the model.
 
-### Univariate Weather Analysis
-
 ![Univariate Weather Analysis](histogram.png)
 
 *Figure: Distribution of temperature, humidity, rainfall, and wind speed in Nyeri (2010–2020).*
@@ -105,11 +103,6 @@ The plots below illustrate the distributions of the four climate variables used 
 **Humidity (RH2M)**-The humidity distribution is left-skewed, with most days between 75% and 90%, confirming that Nyeri provides an environment highly conducive to disease outbreaks.
 
 **Rainfall (PRECTOTCORR)**-The rainfall distribution shows strong zero-inflation, with many days having no rain while rare but heavy events reaching up to 70mm per day, confirming that moisture availability is episodic yet critical for triggering disease risk.
-
-**Rainfall (PRECTOTCORR)**
-- The rainfall distribution exhibits strong **zero-inflation** (many days with no rain).
-- Heavy rainfall events are rare but significant, reaching up to **70mm per day**.
-- This confirms that **moisture availability is episodic but critical** in triggering disease risk.
 
 **Wind Speed (WS2M)**-Wind speeds are generally moderate, centered around 2.0–2.5 m/s, with very few extreme events above 4.0 m/s, supporting later findings that wind contributes minimally to disease prediction
 
@@ -158,15 +151,6 @@ The final processed dataset includes the original weather variables, crop stage,
 | 2010-01-18 | Medium          | 85.22           | 75.62                     |
 | 2010-01-19 | Medium          | 78.20           | 74.39                     |
 
-A sample of the final engineered dataset is shown below:
-
-| Date       | Risk Label (Target)  | Humidity (%)_Lag14 | Humidity (%)_Avg_Last14Days  |
-|------------|----------------------|--------------------|------------------------------|
-| 2010-01-15 | Medium               | 86.57              | 78.30                        |
-| 2010-01-16 | Medium               | 89.25              | 77.43                        |
-| 2010-01-17 | Medium               | 85.61              | 76.35                        |
-| 2010-01-18 | Medium               | 85.22              | 75.62                        |
-| 2010-01-19 | Medium               | 78.20              | 74.39                        |
 
 This confirms that the dataset now reflects **real-world temporal causality**, allowing the model to generate **practical early warnings** rather than merely explaining historical patterns.
 
