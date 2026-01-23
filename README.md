@@ -150,15 +150,23 @@ The final processed dataset includes the original weather variables, crop stage,
 | 2010-01-18 | Medium          | 85.22           | 75.62                     |
 | 2010-01-19 | Medium          | 78.20           | 74.39                     |
 
-With the dataset now prepared—class imbalance understood and addressed, and lagged and rolling features engineered—the data is fully ready for predictive modeling of Coffee Leaf Rust outbreaks.
+With the dataset now prepared class imbalance understood and addressed, and lagged and rolling features engineered—the data is fully ready for predictive modeling of Coffee Leaf Rust outbreaks.
 
 ---
 
-# 5. Modelling
 
-This section sets up the supervised learning pipeline, defines the train–test split with stratification, and compares multiple algorithms (Logistic Regression, Random Forest, XGBoost) using a consistent preprocessing framework.
+## 4. Modelling
 
-The main goal is to predict the multi-class target `RiskLabel(Target)` (Low, Medium, High) while handling class imbalance and avoiding data leakage through careful preprocessing and pipeline design.
+To predict Coffee Leaf Rust (CLR) risk, three classification models were implemented: Logistic Regression as a baseline, Random Forest as a robust ensemble method, and XGBoost for gradient boosting optimization.  
+
+The target variable, `RiskLabel(Target)`, was encoded numerically (Low → 0, Medium → 1, High → 2), and features included all lagged and rolling weather variables along with the engineered Crop Stage. Date and original target columns were excluded to prevent data leakage.  
+
+The dataset was split into training and testing sets using an 80:20 ratio with stratification, ensuring that the minority High Risk class was represented in both sets for accurate evaluation.  
+
+Numerical features were standardized, and Crop Stage was encoded to be compatible with the models. Class weighting was applied to account for the moderate class imbalance, ensuring that High Risk days received appropriate importance during training.  
+
+This setup allows a direct comparison between the baseline Logistic Regression and the ensemble models. Random Forest and XGBoost are expected to better capture non-linear interactions between weather variables, rolling averages, lagged features, and Crop Stage, thereby improving recall and F1-score for the critical High Risk category. This is particularly important for farmers, as correctly predicting High Risk days enables timely interventions to prevent disease outbreaks.
+
 
 ## 5.1 Preparing X and y
 
