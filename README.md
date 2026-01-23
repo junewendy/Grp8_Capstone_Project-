@@ -75,74 +75,38 @@ The project environment was configured using standard Python data science librar
 
 Exploratory analysis was conducted to understand the structure, quality, and behavior of the data before modeling.
 
-### 3.1 Data Quality Validation
-
 Logical validation checks were performed to ensure the data values were physically realistic for the Nyeri region:
 
 - Maximum temperature detected: **21.02°C**  
 - Minimum temperature detected: **11.91°C**  
 - Maximum humidity detected: **93.19%**  
-
-These values fall within realistic environmental ranges, confirming that the dataset is **credible and suitable for modeling**.
-
----
-
-## 3.2 Univariate Analysis (Distributions)
-
-Univariate analysis was conducted on the four core weather variables used in the project:
+**Univariate analysis was conducted on the four core weather variables used in the project:**
 - Temperature (T2M)  
 - Relative Humidity (RH2M)  
 - Rainfall (PRECTOTCORR)  
 - Wind Speed (WS2M)  
 
-Histograms were used to assess:
-- Distribution shapes  
-- Presence of outliers  
-- Environmental patterns  
-- Normality characteristics  
+Histograms were used to assess:Distribution shapes,Presence of outliers,Environmental patterns and  Normality characteristics  
 
-### Visualizing Weather Patterns in Nyeri (2010–2020)
+**Visualizing Weather Patterns in Nyeri (2010–2020)**
 
 The plots below illustrate the distributions of the four climate variables used in the model.
 
 ![Univariate Weather Analysis](histogram.png)
 
 *Figure: Distribution of temperature, humidity, rainfall, and wind speed in Nyeri (2010–2020).*
+** Key Insights from the Analysis**
 
----
+**Temperature (T2M)**-Temperatures are relatively stable throughout the period, mostly ranging between 14°C and 19°C, providing conditions that are optimal for coffee growth but also favorable for fungal development.
+**Humidity (RH2M)**-The humidity distribution is left-skewed, with most days between 75% and 90%, confirming that Nyeri provides an environment highly conducive to disease outbreaks.
+**Rainfall (PRECTOTCORR)**-The rainfall distribution shows strong zero-inflation, with many days having no rain while rare but heavy events reaching up to 70mm per day, confirming that moisture availability is episodic yet critical for triggering disease risk.
+**Wind Speed (WS2M)**-Wind speeds are generally moderate, centered around 2.0–2.5 m/s, with very few extreme events above 4.0 m/s, supporting later findings that wind contributes minimally to disease predictio
 
-## Key Insights from the Analysis
-
-**Temperature (T2M)**
-- Temperatures are relatively stable throughout the period.
-- Most observations fall between **14°C and 19°C**.
-- This range is optimal for coffee growth but also favorable for fungal development.
-
-**Humidity (RH2M)**
-- The distribution is **left-skewed**, indicating consistently high humidity.
-- The majority of days fall between **75% and 90%**.
-- This confirms that Nyeri provides an environment highly conducive to disease outbreaks.
-
-**Rainfall (PRECTOTCORR)**
-- The rainfall distribution exhibits strong **zero-inflation** (many days with no rain).
-- Heavy rainfall events are rare but significant, reaching up to **70mm per day**.
-- This confirms that **moisture availability is episodic but critical** in triggering disease risk.
-
-**Wind Speed (WS2M)**
-- Wind speeds are generally moderate, centered around **2.0–2.5 m/s**.
-- Very few extreme wind events (>4.0 m/s) are observed.
-- This supports later modeling findings that wind contributes minimally to disease prediction.
-
----
-
-## Dataset Summary
-
+**Dataset Summary**
 The final dataset used for modeling consisted of:
-
 - **Rows:** 4,018  
 - **Columns:** 4  
 - **Missing Values:** None  
-
 This confirms that the dataset is **clean, complete, and suitable for machine learning modeling**.
 
 ---
