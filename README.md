@@ -142,7 +142,7 @@ Algorithms like Random Forest and XGBoost naturally aim to minimize total error,
 
 The class imbalance is visually represented in the bar chart below, showing the number of days labeled Low, Medium, and High from 2010 to 2020:
 
-![Class Distribution of Coffee Disease Risk](path/to/class_distribution.png)
+![Class Distribution of Coffee Disease Risk](Class-Distribution.png)
 
 As noted, there are approximately 3,000 "Medium" days and around 500 "High" days. This confirms the need for class weighting during modeling, ensuring that missing one High Risk day is treated as far more severe than missing one Medium Risk day.
 
