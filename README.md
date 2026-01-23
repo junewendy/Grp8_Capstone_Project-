@@ -79,7 +79,8 @@ Logical validation checks were performed to ensure the data values were physical
 
 - Maximum temperature detected: **21.02°C**  
 - Minimum temperature detected: **11.91°C**  
-- Maximum humidity detected: **93.19%**  
+- Maximum humidity detected: **93.19%**
+
 **Univariate analysis was conducted on the four core weather variables used in the project:**
 - Temperature (T2M)  
 - Relative Humidity (RH2M)  
@@ -98,8 +99,11 @@ The plots below illustrate the distributions of the four climate variables used 
 ** Key Insights from the Analysis**
 
 **Temperature (T2M)**-Temperatures are relatively stable throughout the period, mostly ranging between 14°C and 19°C, providing conditions that are optimal for coffee growth but also favorable for fungal development.
+
 **Humidity (RH2M)**-The humidity distribution is left-skewed, with most days between 75% and 90%, confirming that Nyeri provides an environment highly conducive to disease outbreaks.
+
 **Rainfall (PRECTOTCORR)**-The rainfall distribution shows strong zero-inflation, with many days having no rain while rare but heavy events reaching up to 70mm per day, confirming that moisture availability is episodic yet critical for triggering disease risk.
+
 **Wind Speed (WS2M)**-Wind speeds are generally moderate, centered around 2.0–2.5 m/s, with very few extreme events above 4.0 m/s, supporting later findings that wind contributes minimally to disease predictio
 
 **Dataset Summary**
