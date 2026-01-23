@@ -193,3 +193,20 @@ This design choice was intentional because requiring users to manually input man
 
 The deployed application can be accessed here:
 
+### Conclusion
+The project successfully developed a Predictive Early Warning System for Coffee Leaf Rust using a Random Forest Classifier. The model achieved a 98% Recall for high-risk outbreaks, significantly outperforming the baseline Logistic Regression at 91%. The analysis identifies Rainfall as the leading indicator of risk, followed by Temperature and Humidity, suggesting that moisture availability is the critical catalyst for fungal development in the Nyeri region.
+This means farmers can trust the system to only recommend spraying when it is absolutely necessary, saving both the crop and their money."
+
+Final comparison table
+
+| Model | Best For... | Business Impact |
+| :--- | :--- | :--- |
+| **LogReg** | Simplicity | High safety (Recall), but expensive (False Positives). |
+| **Random Forest** | **Safety (Recall)** | **The "Farmer's Choice":** Almost never misses an outbreak. |
+
+
+- Observation: Wind Speed showed negligible feature importance.
+
+- Interpretation: The disease is "moisture-driven" rather than "dispersal-limited."
+
+- Action: Future versions of the model could potentially exclude wind data to simplify the sensor array without losing accuracy.
