@@ -50,29 +50,24 @@ There is therefore a **critical need for a data-driven early warning system** th
 ---
 
 ## 2. Data Understanding
-
 This project follows the **CRISP-DM (Cross Industry Standard Process for Data Mining)** framework to ensure a structured and rigorous data science workflow.
 
-### Data Source  
-Data was obtained from the **NASA POWER API**, which provides high-quality agro-meteorological datasets suitable for climate-sensitive applications.
+**Data Source:**  
+Data was obtained from the **NASA POWER API**, providing high-quality agro-meteorological datasets suitable for climate-sensitive applications.
 
-- **Data Period:** 01-01-2010 to 31-12-2020  
-- **Geographical Focus:** Nyeri County, Kenya (a major coffee-growing zone)  
-- **Data Type:** Daily weather observations relevant to plant disease development  
+**Data Period:** 01-01-2010 to 31-12-2020  
+**Geographical Focus:** Nyeri County, Kenya (a major coffee-growing zone)  
+**Data Type:** Daily weather observations relevant to plant disease development  
 
-The dataset was selected because environmental variables such as **temperature, humidity, rainfall, and wind speed** are scientifically linked to fungal disease outbreaks.
+The dataset was selected because environmental variables such as **temperature, humidity, rainfall, and wind speed** are scientifically linked to fungal disease outbreaks. These variables serve as the **primary features** for model prediction.
 
----
-
-## 2.1 Imports & Environment Setup
-
+**Imports & Environment Setup:**  
 The project environment was configured using standard Python data science libraries for:
-- Data manipulation  
-- Visualization  
-- Exploratory data analysis  
-- Machine learning modeling  
 
-These tools supported a reproducible and rigorous analytical workflow throughout the project.
+- Data manipulation (`pandas`, `numpy`)  
+- Visualization (`matplotlib`, `seaborn`)  
+- Exploratory data analysis  
+- Machine learning modeling (`scikit-learn`, `xgboost`, `joblib`)  
 
 ---
 
