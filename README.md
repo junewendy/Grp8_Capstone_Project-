@@ -195,7 +195,7 @@ To address this issue, regularization was applied to constrain model complexity.
 
 The model performance comparison for High-Risk Recall and F1-Score is shown below.
 
-![Model Performance Comparison](model_comparison.png)
+![Model Performance Comparison](Model-Performance-Comparison.png)
 
 Based on both statistical performance and practical usefulness, the regularized Random Forest model was selected as the final model. Although it may generate occasional false alerts, it minimizes the risk of missing serious outbreaks, which is the most critical requirement in real-world agricultural decision-making.
 
