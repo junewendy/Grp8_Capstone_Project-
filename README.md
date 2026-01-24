@@ -9,7 +9,6 @@
 - Catherine Kaino  
 - Joram Lemaiyan  
 - Kennedy Omoro  
-- Kigen Tuwei  
 - Hellen Khisa  
 - Alvin Ngeno  
 
